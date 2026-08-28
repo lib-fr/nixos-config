@@ -20,6 +20,7 @@ let
     };
     version = "13.44";
   });
+  bitwardenFQDN = "bitwarden.libr.fr";
 in
 {
   system.stateVersion = "26.05";
@@ -105,6 +106,8 @@ in
       "bgremove.libr.fr".forceSSL = true;
       "bgremove.libr.fr".enableACME = true;
 
+      "${bitwardenFQDN}".enableACME = true;
+
       "michaelmercier.fr" = {
         locations."/" = {
           root = "/data/public/mmercier/website";
@@ -153,6 +156,9 @@ in
         hashedPasswordFile = "/data/keys/mickours-at-libr-dot-fr";
         aliases = [
           "michael.mercier@libr.fr"
+          "michael@libr.fr"
+          "m@libr.fr"
+          "mm@libr.fr"
           "info@libr.fr"
           "postmaster@libr.fr"
           "abuse@libr.fr"
@@ -163,6 +169,10 @@ in
       "marine.mercier@libr.fr" = {
         hashedPasswordFile = "/data/keys/marine-mercier-at-libr-dot-fr";
         aliases = [ "marine@libr.fr" ];
+      };
+      "simon.mercier@libr.fr" = {
+        hashedPasswordFile = "/data/keys/simon-mercier-at-libr-dot-fr";
+        aliases = [ "simon@libr.fr" ];
       };
       "me@michaelmercier.fr" = {
         hashedPasswordFile = "/data/keys/me-at-michaelmercier-dot-fr";
@@ -175,6 +185,10 @@ in
       };
       "nextcloud@libr.fr" = {
         hashedPasswordFile = "/data/keys/nextcloud-at-libr-dot-fr";
+        aliases = [ "ne-pas-repondre@libr.fr" ];
+      };
+      "bitwarden@libr.fr" = {
+        hashedPasswordFile = "/data/keys/bitwarden-at-libr-dot-fr";
         aliases = [ "ne-pas-repondre@libr.fr" ];
       };
     };
@@ -202,7 +216,7 @@ in
 
   services.nextcloud = {
     enable = true;
-    package = pkgs.nextcloud33;
+    package = pkgs.nextcloud34;
     home = "/data/nextcloud";
     hostName = "nextcloud.libr.fr";
     https = true;
@@ -234,6 +248,14 @@ in
       apps.memories.exiftool_no_local = true;
       # Fix memories place setup
       dbtableprefix = "oc_";
+
+      # Ensure standard system binaries and procps are available
+      path = with pkgs; [
+        which
+        procps
+        coreutils
+      ];
+
     };
 
     config.objectstore.s3 = {
@@ -287,7 +309,7 @@ in
       "pm.max_requests" = "500";
     };
     phpOptions = {
-      "opcache.interned_strings_buffer" = "16";
+      "opcache.interned_strings_buffer" = "32";
     };
   };
 
@@ -301,7 +323,9 @@ in
     authentication = ''
       local all nextcloud peer map=nextcloud
     '';
-    ensureDatabases = [ "nextcloud" ];
+    ensureDatabases = [
+      "nextcloud"
+    ];
     ensureUsers = [
       {
         name = "nextcloud";
@@ -392,6 +416,7 @@ in
       dig
       unixtools.netstat
       git
+      sl
       # For nextcloud apps: Memories
       exiftool_13_44
       ffmpeg
