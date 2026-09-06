@@ -62,6 +62,13 @@
         # autoRollback = false;
       };
 
+      # Exposed so the app can be built and its hashes refreshed on its own,
+      # without going through a full nixos-rebuild:
+      #   nix build .#nextcloud-app-facerecognition -L
+      packages.x86_64-linux.nextcloud-app-facerecognition =
+        (import nixpkgs { inherit system; }).callPackage ./pkgs/nextcloud-app-facerecognition
+          { };
+
       # This is highly advised, and will prevent many possible mistakes
       checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
       # Enable autoformat
