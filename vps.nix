@@ -21,6 +21,7 @@ let
     version = "13.44";
   });
   bitwardenFQDN = "bitwarden.libr.fr";
+  facerecognition = pkgs.callPackage ./pkgs/nextcloud-app-facerecognition { };
 in
 {
   system.stateVersion = "26.05";
@@ -249,6 +250,12 @@ in
       # Fix memories place setup
       dbtableprefix = "oc_";
 
+      # Serve the dlib models from the Nix store instead of having
+      # `occ face:setup` download them into appdata at runtime. The app's
+      # install() is a no-op once the files are there and ModelService skips
+      # its mkdir on an existing directory, so a read-only path is fine.
+      "facerecognition.model_path" = "${facerecognition.models}";
+
       # Ensure standard system binaries and procps are available
       path = with pkgs; [
         which
@@ -278,21 +285,11 @@ in
       all.apcu
     ];
 
-    # Install facerecognition from upstream master (v0.9.90) instead of the
-    # appstore. The latest released version (v0.9.70) still calls the
-    # deprecated QueryBuilder::execute(), which Nextcloud 33 removed, so
-    # `face:background_job` crashes. Master (PR #840 "nc33-upgrade") migrated
-    # all DB calls to executeQuery()/executeStatement() and declares NC 31-33
-    # support, but is not yet tagged in a release.
-    # NOTE: this is the git source (no built JS), so the facerecognition app's
-    # own web settings page has degraded assets. The background job and the
-    # Memories "People" view (which read the same DB) work fully.
-    extraApps.facerecognition = pkgs.fetchFromGitHub {
-      owner = "matiasdelellis";
-      repo = "facerecognition";
-      rev = "6edb9f405a7d2273a678e55524a2f7b4ccbc63b5"; # master @ 2026-06-09, v0.9.90
-      hash = "sha256-2b8u6hlUVoDZVapnHNUs8jalRj7Eh8EUiXPew752GAg=";
-    };
+    # Built from upstream master rather than the appstore: the latest release
+    # (v0.9.70) is published for Nextcloud 31 only. Master declares NC 34, which
+    # matches the package above. Unlike the previous bare fetchFromGitHub, this
+    # derivation also builds the frontend, so the app's own settings pages work.
+    extraApps.facerecognition = facerecognition;
     extraAppsEnable = true;
     # extraApps disables the appstore UI by default; keep it on so the other
     # appstore-installed apps (Memories, etc.) can still be managed/updated.
