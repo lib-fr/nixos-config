@@ -268,11 +268,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788689760,
-        "narHash": "sha256-DqpsIQsbfQIaeswD5Ywp/165p3wxpa8XOqR4d+5H9FQ=",
+        "lastModified": 1788717686,
+        "narHash": "sha256-dO6X7nta2fd2WFl2lBI1eVfx2ykqclTN2mlXUZ0L794=",
         "ref": "refs/heads/main",
-        "rev": "f1c0a85702ebfdc4952ca35faf35f1998c83554f",
-        "revCount": 27,
+        "rev": "01fb4b8c659a17056cac660fe032bd4a4667a712",
+        "revCount": 32,
         "type": "git",
         "url": "file:///home/mickours/Projects/libr-fr/repartition_classes"
       },
