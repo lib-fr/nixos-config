@@ -382,6 +382,41 @@ in
     };
   };
 
+  services.vaultwarden = {
+    enable = true;
+    # Needed to enable postgresql
+    package = pkgs.vaultwarden-postgresql;
+    dbBackend = "postgresql";
+    configureNginx = true;
+    configurePostgres = true;
+    domain = bitwardenFQDN;
+
+    # in order to avoid having ADMIN_TOKEN in the nix store it can be also set with the help of an environment file
+    # be aware that this file must be created by hand (or via secrets management like sops)
+    #
+    # Required variables;
+    # SMTP_USERNAME=username
+    # SMTP_PASSWORD=password
+    environmentFile = "/data/vaultwarden/vaultwarden.env";
+    config = {
+      # Refer to https://github.com/dani-garcia/vaultwarden/blob/main/.env.template
+      SIGNUPS_ALLOWED = false;
+
+      ROCKET_ADDRESS = "127.0.0.1";
+      ROCKET_PORT = 8222;
+      ROCKET_LOG = "critical";
+
+      # This example assumes a mailserver running on localhost,
+      # thus without transport encryption.
+      # If you use an external mail server, follow:
+      #   https://github.com/dani-garcia/vaultwarden/wiki/SMTP-configuration
+      SMTP_HOST = "mail.libr.fr";
+      SMTP_SECURITY = "force_tls";
+      SMTP_FROM = "bitwarden@libr.fr";
+      SMTP_FROM_NAME = "libr.fr Bitwarden server";
+    };
+  };
+
   #*************#
   #   Network   #
   #*************#
