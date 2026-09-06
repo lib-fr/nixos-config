@@ -24,6 +24,12 @@
 
   inputs.bgremove.url = "github:RustyShare/bgremove/main";
 
+  # Répartition des élèves en classes (dépôt local, pas encore poussé)
+  inputs.repartition-classes = {
+    url = "git+file:///home/mickours/Projects/libr-fr/repartition_classes";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   outputs =
     {
       self,
@@ -33,6 +39,7 @@
       my_dotfiles,
       leProjetDeVieInput,
       bgremove,
+      repartition-classes,
       ...
     }@inputs:
     let
@@ -50,6 +57,7 @@
             simple-nixos-mailserver.nixosModules.mailserver
             leProjetDeVieInput.nixosModules.default
             bgremove.nixosModules.default
+            repartition-classes.nixosModules.default
           ];
         };
       };

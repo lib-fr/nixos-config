@@ -382,6 +382,17 @@ in
     };
   };
 
+  services.repartition-classes = {
+    enable = true;
+    # host = "127.0.0.1" et port = 5000 par défaut : l'application n'est
+    # joignable qu'à travers le reverse proxy, donc pas d'openFirewall.
+    nginx = {
+      enable = true;
+      virtualHost = "repartition.libr.fr";
+      # enableACME et forceSSL sont activés par défaut
+    };
+  };
+
   services.vaultwarden = {
     enable = true;
     # Needed to enable postgresql

@@ -261,6 +261,26 @@
         "type": "github"
       }
     },
+    "repartition-classes": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788689760,
+        "narHash": "sha256-DqpsIQsbfQIaeswD5Ywp/165p3wxpa8XOqR4d+5H9FQ=",
+        "ref": "refs/heads/main",
+        "rev": "f1c0a85702ebfdc4952ca35faf35f1998c83554f",
+        "revCount": 27,
+        "type": "git",
+        "url": "file:///home/mickours/Projects/libr-fr/repartition_classes"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/mickours/Projects/libr-fr/repartition_classes"
+      }
+    },
     "root": {
       "inputs": {
         "bgremove": "bgremove",
@@ -268,6 +288,7 @@
         "leProjetDeVieInput": "leProjetDeVieInput",
         "my_dotfiles": "my_dotfiles",
         "nixpkgs": "nixpkgs_3",
+        "repartition-classes": "repartition-classes",
         "simple-nixos-mailserver": "simple-nixos-mailserver"
       }
     },
