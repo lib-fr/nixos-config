@@ -380,6 +380,7 @@ in
 
   services.bgremove = {
     enable = true;
+    port = 8001; # le-projet-de-vie's gunicorn hardcodes 127.0.0.1:8000
     nginx = {
       enable = true;
       fqdn = "bgremove.libr.fr";
