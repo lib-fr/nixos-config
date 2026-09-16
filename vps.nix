@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   leProjetDeVie,
   ...
@@ -11,15 +12,6 @@ let
     ./keys/id_rsa_oursbook.pub
     ./keys/id_rsa_vps_passless.pub
   ];
-  exiftool_13_44 = pkgs.exiftool.overrideAttrs (oldAttrs: rec {
-    src = pkgs.fetchFromGitHub {
-      owner = "exiftool";
-      repo = "exiftool";
-      tag = version;
-      hash = "sha256-o9/qg+BQSc2MiZIqvyFKPtCBHU64QLMhA2AcvDCph04=";
-    };
-    version = "13.44";
-  });
   bitwardenFQDN = "bitwarden.libr.fr";
   facerecognition = pkgs.callPackage ./pkgs/nextcloud-app-facerecognition { };
 in
@@ -229,7 +221,6 @@ in
 
     # Forces Nextcloud to use HTTPS
     settings = {
-      overwriteProtocol = "https";
       default_phone_region = "FR";
 
       log_type = "file";
@@ -246,7 +237,6 @@ in
       mail_smtpdebug = true;
       # WARNING smtp password is injected manually
 
-      apps.memories.exiftool_no_local = true;
       # Fix memories place setup
       dbtableprefix = "oc_";
 
@@ -255,13 +245,6 @@ in
       # install() is a no-op once the files are there and ModelService skips
       # its mkdir on an existing directory, so a read-only path is fine.
       "facerecognition.model_path" = "${facerecognition.models}";
-
-      # Ensure standard system binaries and procps are available
-      path = with pkgs; [
-        which
-        procps
-        coreutils
-      ];
 
     };
 
@@ -285,14 +268,25 @@ in
       all.apcu
     ];
 
-    # Built from upstream master rather than the appstore: the latest release
-    # (v0.9.70) is published for Nextcloud 31 only. Master declares NC 34, which
-    # matches the package above. Unlike the previous bare fetchFromGitHub, this
-    # derivation also builds the frontend, so the app's own settings pages work.
-    extraApps.facerecognition = facerecognition;
+    extraApps = {
+      # Built from upstream master rather than the appstore: the latest release
+      # (v0.9.70) is published for Nextcloud 31 only. Master declares NC 34,
+      # which matches the package above. Unlike the previous bare
+      # fetchFromGitHub, this derivation also builds the frontend, so the app's
+      # own settings pages work.
+      inherit facerecognition;
+      # The appstore build ships PAR-packed exiftool binaries that it copies to
+      # /tmp and executes; those ELFs need /lib64/ld-linux-x86-64.so.2 and
+      # cannot run on NixOS. It also shells out to `perl`, `which`, `ffmpeg`
+      # and go-vod through PATH, which is empty in the systemd units that run
+      # occ/cron. This package patches all of those to absolute store paths
+      # (and rewrites EXIFTOOL_VER to match nixpkgs' exiftool), so nothing
+      # depends on PATH any more. Same version (8.1.0) as the appstore build.
+      memories = pkgs.nextcloud34Packages.apps.memories;
+    };
     extraAppsEnable = true;
     # extraApps disables the appstore UI by default; keep it on so the other
-    # appstore-installed apps (Memories, etc.) can still be managed/updated.
+    # appstore-installed apps can still be managed/updated.
     appstoreEnable = true;
     maxUploadSize = "1G";
     fastcgiTimeout = 600;
@@ -337,14 +331,28 @@ in
     location = "/data/psql-backups";
   };
 
-  # Fix nextcloud memories indexing
-  systemd.services.nextcloud-cron = {
-    path = [
-      (pkgs.perl.withPackages (ps: [ exiftool_13_44 ]))
-      pkgs.procps
-      pkgs.which
-    ];
-  };
+  # files_lock ships lock_timeout = -1 (infinite). Text leaks a lock whenever an
+  # editing session dies (nextcloud/text#9042), and with an infinite timeout
+  # LockService::getDeprecatedLocks() returns nothing, so the cleanup cron never
+  # purges it: every later write to that file gets HTTP 423 forever -- which is
+  # how the Notes Android app silently stops syncing (nextcloud/notes#1940).
+  # 24h rather than something short because the purge filters on the lock's
+  # `creation` and LocksRequest::update() never refreshes it, so an actively
+  # extended lock is still purged on its original creation time.
+  systemd.services.nextcloud-setup.postStart = ''
+    ${lib.getExe config.services.nextcloud.occ} config:app:set files_lock lock_timeout --value 1440
+  '';
+
+  # Units without an explicit `path` run with systemd's compiled-in default
+  # PATH, which on NixOS holds almost nothing, so anything shelling out to
+  # `which`, `ps`, ... fails -- e.g. Memories' BinExt::pkill() from
+  # nextcloud-cron, or from the transient units nextcloud-occ spawns through
+  # systemd-run to load its credentials. This has to be the manager's
+  # DefaultEnvironment: systemd.globalEnvironment only merges into the
+  # Environment= of NixOS-declared units, so systemd-run transients miss it.
+  # Same PATH the nextcloud module gives its php-fpm pool; units setting their
+  # own `path` still win.
+  systemd.settings.Manager.DefaultEnvironment = "PATH=/run/wrappers/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin:/usr/bin:/bin";
 
   ## For backgroud job for face recognition
   systemd.timers."nextcloud-face-recognition" = {
@@ -372,14 +380,20 @@ in
 
   services.bgremove = {
     enable = true;
-    host = "0.0.0.0"; # default 127.0.0.1
-    port = 8081;
-    openFirewall = true; # default false
     nginx = {
       enable = true;
       fqdn = "bgremove.libr.fr";
       # enableACME = true; # Let's Encrypt cert + force HTTPS (default false)
     };
+    maxConcurrency = 1;
+    maxPixels = 12000000;
+    maxQueue = 4;
+    maxUploadMB = 15;
+    threads = 2; # match your vCPU count
+
+    memoryHigh = "1400M";
+    memoryMax = "1600M";
+    memorySwapMax = "512M";
   };
 
   services.repartition-classes = {
@@ -460,8 +474,7 @@ in
       unixtools.netstat
       git
       sl
-      # For nextcloud apps: Memories
-      exiftool_13_44
+      exiftool
       ffmpeg
     ];
 }
