@@ -185,13 +185,51 @@ in
 
   # The Nextcloud client secret is read by two different daemons: kanidm (which
   # pushes it as the oauth2 basic secret) and nextcloud-setup (which hands it to
-  # user_oidc). A shared group beats making it world-readable:
-  #   chown root:oidc-secrets /data/keys/kanidm-oauth2-nextcloud
-  #   chmod 440            /data/keys/kanidm-oauth2-nextcloud
+  # user_oidc), so they share a group rather than the secret being
+  # world-readable.
   users.groups.oidc-secrets.members = [
     "kanidm"
     "nextcloud"
   ];
+
+  # Ownership of the SSO secrets is declared rather than left to a README.
+  # Without this the first deploy cannot work: `kanidm` and `oidc-secrets` do
+  # not exist until activation creates them, yet kanidm.service and
+  # nextcloud-setup.service need to read these files during that same
+  # activation -- a root-owned 0400 file fails both units and deploy-rs rolls
+  # the whole thing back. tmpfiles runs before any unit starts, so dropping the
+  # files in place as root is enough.
+  #
+  # `z` adjusts an existing path and is silently skipped otherwise, which is
+  # what makes the mail token below harmless while `mailUsesLdap` is false.
+  systemd.tmpfiles.settings."15-sso-secrets" =
+    let
+      kanidmOnly = {
+        z = {
+          user = "kanidm";
+          group = "kanidm";
+          mode = "0400";
+        };
+      };
+    in
+    {
+      "/data/keys/kanidm-idm-admin-password" = kanidmOnly;
+      "/data/keys/kanidm-persons.json" = kanidmOnly;
+      "/data/keys/kanidm-oauth2-vaultwarden" = kanidmOnly;
+      # Shared with nextcloud-setup, hence the group and the extra bit.
+      "/data/keys/kanidm-oauth2-nextcloud".z = {
+        user = "root";
+        group = "oidc-secrets";
+        mode = "0440";
+      };
+      # Loaded by systemd as a credential for dovecot, and read by
+      # postfix-setup's preStart, both as root.
+      "/data/keys/kanidm-mailserver-token".z = {
+        user = "root";
+        group = "root";
+        mode = "0400";
+      };
+    };
 
   # Both sockets listen on loopback only. Resolving the public name to
   # 127.0.0.1 lets Dovecot reach LDAPS and Nextcloud reach the discovery
