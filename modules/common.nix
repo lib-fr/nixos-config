@@ -131,9 +131,10 @@ with lib;
       openssl
     ];
 
-    # Add my user
+    # Add my user. No `description`: it is the GECOS field, so it would put a
+    # full name in /etc/passwd -- and in this repo -- for no benefit. It
+    # defaults to the empty string.
     users.extraUsers.mmercier = {
-      description = "Michael Mercier";
       isNormalUser = true;
       extraGroups = [ "wheel" ];
       shell = pkgs.zsh;
