@@ -14,15 +14,21 @@ let
   ];
   bitwardenFQDN = "bitwarden.libr.fr";
   nextcloudFQDN = "nextcloud.libr.fr";
+  # The domain Kanidm manages must be a suffix of the origin's host, so
+  # `idm.libr.fr` rather than `libr.fr`.
   idmFQDN = "idm.libr.fr";
-  # Kanidm derives its LDAP base DN from the domain it manages, which must be a
-  # suffix of the origin's host -- so `idm.libr.fr`, not `libr.fr`.
-  idmBaseDN = "dc=idm,dc=libr,dc=fr";
-  # Kanidm renders group membership as the group's full DN, e.g.
-  # `memberof: spn=mail_users@idm.libr.fr,dc=idm,dc=libr,dc=fr`. Gating the mail
-  # filters on it means being a person in Kanidm is not by itself enough to
-  # collect mail -- only members of `mail_users` are.
-  mailGroupDN = "spn=mail_users@${idmFQDN},${idmBaseDN}";
+
+  # Both of these have to match what a running Kanidm returns over LDAP, which
+  # is the one thing building the configuration cannot check. They are computed
+  # by ../../lib/kanidm-ldap.nix, which tests/kanidm-ldap.nix asserts against a
+  # real server -- see `nix build .#checks.x86_64-linux.kanidm-ldap`.
+  inherit (import ../../lib/kanidm-ldap.nix { inherit lib; }) baseDNOf groupDNOf;
+  nextcloudOidc = import ../../lib/nextcloud-oidc.nix { };
+  oidcClientId = "nextcloud";
+  idmBaseDN = baseDNOf idmFQDN;
+  # Gating the mail filters on group membership means being a person in Kanidm
+  # is not by itself enough to collect mail -- only members of `mail_users` are.
+  mailGroupDN = groupDNOf idmFQDN "mail_users";
 
   # Whether Dovecot/Postfix authenticate against Kanidm over LDAP.
   #
@@ -31,7 +37,7 @@ let
   # otherwise -- and the token can only be minted once Kanidm is running:
   #
   #   kanidm login --name idm_admin
-  #   kanidm service-account create mailserver "Mail Server" --name idm_admin
+  #   kanidm service-account create mailserver "Mail Server" idm_admins --name idm_admin
   #   kanidm group add-members idm_people_pii_read mailserver --name idm_admin
   #   kanidm service-account api-token generate --name idm_admin \
   #       mailserver dovecot --read-only
@@ -185,13 +191,51 @@ in
 
   # The Nextcloud client secret is read by two different daemons: kanidm (which
   # pushes it as the oauth2 basic secret) and nextcloud-setup (which hands it to
-  # user_oidc). A shared group beats making it world-readable:
-  #   chown root:oidc-secrets /data/keys/kanidm-oauth2-nextcloud
-  #   chmod 440            /data/keys/kanidm-oauth2-nextcloud
+  # user_oidc), so they share a group rather than the secret being
+  # world-readable.
   users.groups.oidc-secrets.members = [
     "kanidm"
     "nextcloud"
   ];
+
+  # Ownership of the SSO secrets is declared rather than left to a README.
+  # Without this the first deploy cannot work: `kanidm` and `oidc-secrets` do
+  # not exist until activation creates them, yet kanidm.service and
+  # nextcloud-setup.service need to read these files during that same
+  # activation -- a root-owned 0400 file fails both units and deploy-rs rolls
+  # the whole thing back. tmpfiles runs before any unit starts, so dropping the
+  # files in place as root is enough.
+  #
+  # `z` adjusts an existing path and is silently skipped otherwise, which is
+  # what makes the mail token below harmless while `mailUsesLdap` is false.
+  systemd.tmpfiles.settings."15-sso-secrets" =
+    let
+      kanidmOnly = {
+        z = {
+          user = "kanidm";
+          group = "kanidm";
+          mode = "0400";
+        };
+      };
+    in
+    {
+      "/data/keys/kanidm-idm-admin-password" = kanidmOnly;
+      "/data/keys/kanidm-persons.json" = kanidmOnly;
+      "/data/keys/kanidm-oauth2-vaultwarden" = kanidmOnly;
+      # Shared with nextcloud-setup, hence the group and the extra bit.
+      "/data/keys/kanidm-oauth2-nextcloud".z = {
+        user = "root";
+        group = "oidc-secrets";
+        mode = "0440";
+      };
+      # Loaded by systemd as a credential for dovecot, and read by
+      # postfix-setup's preStart, both as root.
+      "/data/keys/kanidm-mailserver-token".z = {
+        user = "root";
+        group = "root";
+        mode = "0400";
+      };
+    };
 
   # Both sockets listen on loopback only. Resolving the public name to
   # 127.0.0.1 lets Dovecot reach LDAPS and Nextcloud reach the discovery
@@ -272,7 +316,7 @@ in
       systems.oauth2 = {
         nextcloud = {
           displayName = "Nextcloud";
-          originUrl = "https://${nextcloudFQDN}/apps/user_oidc/code";
+          originUrl = nextcloudOidc.redirectUriFor "https://${nextcloudFQDN}";
           originLanding = "https://${nextcloudFQDN}/";
           basicSecretFile = "/data/keys/kanidm-oauth2-nextcloud";
           # user_oidc maps accounts on `preferred_username`; the short name
@@ -593,21 +637,16 @@ in
       # that identifier already exists. The secret is passed by path so it never
       # reaches the Nix store or the process table.
       #
-      # `--unique-uid=0` is what makes this a migration rather than a fresh
-      # start: with it set, user_oidc uses the `preferred_username` claim
-      # verbatim as the Nextcloud user ID instead of hashing it together with
-      # the provider, so `mickours` logs back into the existing account and its
-      # files, rather than into an empty one.
+      # The URL and the mapping flags come from ../../lib/nextcloud-oidc.nix,
+      # which tests/nextcloud-oidc.nix asserts against a real Kanidm and a real
+      # Nextcloud -- including that an existing account is reused rather than
+      # duplicated. See `nix build .#checks.x86_64-linux.nextcloud-oidc`.
       ${lib.getExe config.services.nextcloud.occ} user_oidc:provider Kanidm \
-        --clientid="nextcloud" \
+        --clientid="${oidcClientId}" \
         --clientsecret-file="/data/keys/kanidm-oauth2-nextcloud" \
-        --discoveryuri="https://${idmFQDN}/oauth2/openid/nextcloud/.well-known/openid-configuration" \
+        --discoveryuri="${nextcloudOidc.discoveryUriFor "https://${idmFQDN}" oidcClientId}" \
         --endsessionendpointuri="https://${idmFQDN}/ui/logout" \
-        --scope="openid email profile" \
-        --unique-uid=0 \
-        --mapping-uid="preferred_username" \
-        --mapping-display-name="name" \
-        --mapping-email="email"
+        ${lib.escapeShellArgs nextcloudOidc.providerMappingArgs}
 
       # Keep the plain login form reachable alongside SSO during the migration;
       # it is also the way back in if Kanidm is ever down.

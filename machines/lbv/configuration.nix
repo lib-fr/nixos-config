@@ -93,9 +93,10 @@ in
   users.users.root.shell = pkgs.zsh;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
+  # No `description`: it is the GECOS field, so it would put a full name in
+  # /etc/passwd and in this repo. Same reasoning as in modules/common.nix.
   users.users."mickours" = {
     isNormalUser = true;
-    description = "Michael Mercier";
     extraGroups = [
       "networkmanager"
       "wheel"
