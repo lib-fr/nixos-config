@@ -1,0 +1,42 @@
+{
+  "persons": {
+    "prenom": {
+      "displayName": "Prénom Nom",
+      "legalName": "Prénom Nom",
+      "mailAddresses": [
+        "prenom.nom@libr.fr",
+        "prenom@libr.fr"
+      ]
+    },
+    "autre": {
+      "displayName": "Autre Personne",
+      "mailAddresses": [
+        "autre@libr.fr"
+      ]
+    }
+  },
+  "groups": {
+    "nextcloud_users": {
+      "members": [
+        "prenom",
+        "autre"
+      ]
+    },
+    "nextcloud_admins": {
+      "members": [
+        "prenom"
+      ]
+    },
+    "vaultwarden_users": {
+      "members": [
+        "prenom"
+      ]
+    },
+    "mail_users": {
+      "members": [
+        "prenom",
+        "autre"
+      ]
+    }
+  }
+}
