@@ -91,7 +91,17 @@
           { };
 
       # This is highly advised, and will prevent many possible mistakes
-      checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+      checks =
+        builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib
+        // {
+          x86_64-linux = (deploy-rs.lib.x86_64-linux.deployChecks self.deploy) // {
+            # Asserts lib/kanidm-ldap.nix against a real Kanidm over LDAPS: the
+            # DN format and attribute names there cannot be checked by building
+            # the configuration, and getting them wrong breaks mail.
+            #   nix build .#checks.x86_64-linux.kanidm-ldap -L
+            kanidm-ldap = (import nixpkgs { inherit system; }).testers.runNixOSTest ./tests/kanidm-ldap.nix;
+          };
+        };
       # Enable autoformat
       formatter.x86_64-linux = (import nixpkgs { system = "x86_64-linux"; }).pkgs.nixfmt-tree;
     };
