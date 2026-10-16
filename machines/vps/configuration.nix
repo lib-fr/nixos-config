@@ -14,15 +14,19 @@ let
   ];
   bitwardenFQDN = "bitwarden.libr.fr";
   nextcloudFQDN = "nextcloud.libr.fr";
+  # The domain Kanidm manages must be a suffix of the origin's host, so
+  # `idm.libr.fr` rather than `libr.fr`.
   idmFQDN = "idm.libr.fr";
-  # Kanidm derives its LDAP base DN from the domain it manages, which must be a
-  # suffix of the origin's host -- so `idm.libr.fr`, not `libr.fr`.
-  idmBaseDN = "dc=idm,dc=libr,dc=fr";
-  # Kanidm renders group membership as the group's full DN, e.g.
-  # `memberof: spn=mail_users@idm.libr.fr,dc=idm,dc=libr,dc=fr`. Gating the mail
-  # filters on it means being a person in Kanidm is not by itself enough to
-  # collect mail -- only members of `mail_users` are.
-  mailGroupDN = "spn=mail_users@${idmFQDN},${idmBaseDN}";
+
+  # Both of these have to match what a running Kanidm returns over LDAP, which
+  # is the one thing building the configuration cannot check. They are computed
+  # by ../../lib/kanidm-ldap.nix, which tests/kanidm-ldap.nix asserts against a
+  # real server -- see `nix build .#checks.x86_64-linux.kanidm-ldap`.
+  inherit (import ../../lib/kanidm-ldap.nix { inherit lib; }) baseDNOf groupDNOf;
+  idmBaseDN = baseDNOf idmFQDN;
+  # Gating the mail filters on group membership means being a person in Kanidm
+  # is not by itself enough to collect mail -- only members of `mail_users` are.
+  mailGroupDN = groupDNOf idmFQDN "mail_users";
 
   # Whether Dovecot/Postfix authenticate against Kanidm over LDAP.
   #
@@ -31,7 +35,7 @@ let
   # otherwise -- and the token can only be minted once Kanidm is running:
   #
   #   kanidm login --name idm_admin
-  #   kanidm service-account create mailserver "Mail Server" --name idm_admin
+  #   kanidm service-account create mailserver "Mail Server" idm_admins --name idm_admin
   #   kanidm group add-members idm_people_pii_read mailserver --name idm_admin
   #   kanidm service-account api-token generate --name idm_admin \
   #       mailserver dovecot --read-only
