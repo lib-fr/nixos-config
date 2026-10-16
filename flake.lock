@@ -46,11 +46,11 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1789404474,
-        "narHash": "sha256-UXFQ7tFiwn8sPz0EV4CBB2PCf/ZiGIHWn/6MXk81Lxs=",
+        "lastModified": 1791381442,
+        "narHash": "sha256-TQiEqCAQ4bWppfeRGX4O3lwopsgsd2OvcOHTEQRRwEQ=",
         "owner": "serokell",
         "repo": "deploy-rs",
-        "rev": "e760371d631165e7d8de5b0dcf148e21ec4c16f0",
+        "rev": "45ba3f8c5cb28396fff71671806e2550b464ac86",
         "type": "github"
       },
       "original": {
@@ -179,11 +179,11 @@
     "my_dotfiles": {
       "flake": false,
       "locked": {
-        "lastModified": 1736530383,
-        "narHash": "sha256-05bmD48V+fkV+M/qSiKUPoEws1DVExv6CmjbD8CYfbU=",
+        "lastModified": 1791298629,
+        "narHash": "sha256-FY7PQxfddI4n2PEwqVod/Bw9d7jVhMf5S3TeY0hPmjk=",
         "owner": "mickours",
         "repo": "dotfiles",
-        "rev": "af86629e812259b3b1215823fd63b76f868800cc",
+        "rev": "839477dd78aeeee823755d623118cb4e84b856d9",
         "type": "github"
       },
       "original": {
@@ -247,11 +247,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1789459628,
-        "narHash": "sha256-JOaadoI/IC9qEvwlnjwAhwdcWkCDqEeOJ+cOtUH/8RQ=",
+        "lastModified": 1792030654,
+        "narHash": "sha256-OaQwAtPMTjQiY2sT/2/62UbSPhzP/0aDnWzMm/NCiUw=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b67c7a60c3732edd4b947a7df8af06215851a614",
+        "rev": "26f4107e47e3ad0ffd0db220469ba83b6f6d96e8",
         "type": "github"
       },
       "original": {
@@ -270,15 +270,15 @@
       "locked": {
         "lastModified": 1788717686,
         "narHash": "sha256-dO6X7nta2fd2WFl2lBI1eVfx2ykqclTN2mlXUZ0L794=",
-        "ref": "refs/heads/main",
+        "owner": "lib-fr",
+        "repo": "repartition_classes",
         "rev": "01fb4b8c659a17056cac660fe032bd4a4667a712",
-        "revCount": 32,
-        "type": "git",
-        "url": "file:///home/mickours/Projects/libr-fr/repartition_classes"
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "file:///home/mickours/Projects/libr-fr/repartition_classes"
+        "owner": "lib-fr",
+        "repo": "repartition_classes",
+        "type": "github"
       }
     },
     "root": {

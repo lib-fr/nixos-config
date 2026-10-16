@@ -26,7 +26,7 @@
 
   # Répartition des élèves en classes (dépôt local, pas encore poussé)
   inputs.repartition-classes = {
-    url = "git+file:///home/mickours/Projects/libr-fr/repartition_classes";
+    url = "github:lib-fr/repartition_classes";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
@@ -53,11 +53,17 @@
           specialArgs = { inherit inputs leProjetDeVie; };
 
           modules = [
-            ./vps.nix
+            ./machines/vps/configuration.nix
             simple-nixos-mailserver.nixosModules.mailserver
             leProjetDeVieInput.nixosModules.default
             bgremove.nixosModules.default
             repartition-classes.nixosModules.default
+          ];
+        };
+        lbv = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            ./machines/lbv/configuration.nix
           ];
         };
       };
@@ -67,6 +73,13 @@
         user = "root";
         sshUser = "root";
         path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.vps;
+        # autoRollback = false;
+      };
+      deploy.nodes.lbv.hostname = "lbv";
+      deploy.nodes.lbv.profiles.system = {
+        user = "root";
+        sshUser = "root";
+        path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.lbv;
         # autoRollback = false;
       };
 

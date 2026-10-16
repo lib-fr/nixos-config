@@ -63,7 +63,7 @@ with lib;
     # Keyboard and locale support
     console.keyMap = "fr";
     i18n = {
-      defaultLocale = "en_US.UTF-8";
+      # defaultLocale = "en_US.UTF-8";
       extraLocaleSettings = {
         LC_MESSAGES = "en_US.UTF-8";
         LC_TIME = "fr_FR.UTF-8";
