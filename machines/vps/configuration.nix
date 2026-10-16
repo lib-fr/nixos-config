@@ -23,6 +23,8 @@ let
   # by ../../lib/kanidm-ldap.nix, which tests/kanidm-ldap.nix asserts against a
   # real server -- see `nix build .#checks.x86_64-linux.kanidm-ldap`.
   inherit (import ../../lib/kanidm-ldap.nix { inherit lib; }) baseDNOf groupDNOf;
+  nextcloudOidc = import ../../lib/nextcloud-oidc.nix { };
+  oidcClientId = "nextcloud";
   idmBaseDN = baseDNOf idmFQDN;
   # Gating the mail filters on group membership means being a person in Kanidm
   # is not by itself enough to collect mail -- only members of `mail_users` are.
@@ -314,7 +316,7 @@ in
       systems.oauth2 = {
         nextcloud = {
           displayName = "Nextcloud";
-          originUrl = "https://${nextcloudFQDN}/apps/user_oidc/code";
+          originUrl = nextcloudOidc.redirectUriFor "https://${nextcloudFQDN}";
           originLanding = "https://${nextcloudFQDN}/";
           basicSecretFile = "/data/keys/kanidm-oauth2-nextcloud";
           # user_oidc maps accounts on `preferred_username`; the short name
@@ -635,21 +637,16 @@ in
       # that identifier already exists. The secret is passed by path so it never
       # reaches the Nix store or the process table.
       #
-      # `--unique-uid=0` is what makes this a migration rather than a fresh
-      # start: with it set, user_oidc uses the `preferred_username` claim
-      # verbatim as the Nextcloud user ID instead of hashing it together with
-      # the provider, so `mickours` logs back into the existing account and its
-      # files, rather than into an empty one.
+      # The URL and the mapping flags come from ../../lib/nextcloud-oidc.nix,
+      # which tests/nextcloud-oidc.nix asserts against a real Kanidm and a real
+      # Nextcloud -- including that an existing account is reused rather than
+      # duplicated. See `nix build .#checks.x86_64-linux.nextcloud-oidc`.
       ${lib.getExe config.services.nextcloud.occ} user_oidc:provider Kanidm \
-        --clientid="nextcloud" \
+        --clientid="${oidcClientId}" \
         --clientsecret-file="/data/keys/kanidm-oauth2-nextcloud" \
-        --discoveryuri="https://${idmFQDN}/oauth2/openid/nextcloud/.well-known/openid-configuration" \
+        --discoveryuri="${nextcloudOidc.discoveryUriFor "https://${idmFQDN}" oidcClientId}" \
         --endsessionendpointuri="https://${idmFQDN}/ui/logout" \
-        --scope="openid email profile" \
-        --unique-uid=0 \
-        --mapping-uid="preferred_username" \
-        --mapping-display-name="name" \
-        --mapping-email="email"
+        ${lib.escapeShellArgs nextcloudOidc.providerMappingArgs}
 
       # Keep the plain login form reachable alongside SSO during the migration;
       # it is also the way back in if Kanidm is ever down.

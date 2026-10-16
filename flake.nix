@@ -100,6 +100,13 @@
             # the configuration, and getting them wrong breaks mail.
             #   nix build .#checks.x86_64-linux.kanidm-ldap -L
             kanidm-ldap = (import nixpkgs { inherit system; }).testers.runNixOSTest ./tests/kanidm-ldap.nix;
+
+            # Drives a real Nextcloud against a real Kanidm to prove that an SSO
+            # login reuses an existing account instead of creating an empty one.
+            #   nix build .#checks.x86_64-linux.nextcloud-oidc -L
+            nextcloud-oidc =
+              (import nixpkgs { inherit system; }).testers.runNixOSTest
+                ./tests/nextcloud-oidc.nix;
           };
         };
       # Enable autoformat
