@@ -23,7 +23,7 @@ let
   # by ../../lib/kanidm-ldap.nix, which tests/kanidm-ldap.nix asserts against a
   # real server -- see `nix build .#checks.x86_64-linux.kanidm-ldap`.
   inherit (import ../../lib/kanidm-ldap.nix { inherit lib; }) baseDNOf groupDNOf;
-  nextcloudOidc = import ../../lib/nextcloud-oidc.nix { };
+  nextcloudOidc = import ../../lib/nextcloud-oidc.nix { inherit lib; };
   oidcClientId = "nextcloud";
   idmBaseDN = baseDNOf idmFQDN;
   # Gating the mail filters on group membership means being a person in Kanidm
@@ -189,28 +189,24 @@ in
   };
   users.users.nginx.extraGroups = [ "kanidm" ];
 
-  # The Nextcloud client secret is read by two different daemons: kanidm (which
-  # pushes it as the oauth2 basic secret) and nextcloud-setup (which hands it to
-  # user_oidc), so they share a group rather than the secret being
-  # world-readable.
-  users.groups.oidc-secrets.members = [
-    "kanidm"
-    "nextcloud"
-  ];
-
   # Ownership of the SSO secrets is declared rather than left to a README.
-  # Without this the first deploy cannot work: `kanidm` and `oidc-secrets` do
-  # not exist until activation creates them, yet kanidm.service and
-  # nextcloud-setup.service need to read these files during that same
-  # activation -- a root-owned 0400 file fails both units and deploy-rs rolls
-  # the whole thing back. tmpfiles runs before any unit starts, so dropping the
-  # files in place as root is enough.
+  # Without this the first deploy cannot work: `kanidm` does not exist until
+  # activation creates it, yet kanidm.service needs to read these files during
+  # that same activation. systemd-tmpfiles-resetup runs before any unit starts,
+  # so dropping the files in place as root is enough.
+  #
+  # The directory matters as much as the files. /data/keys is root-only, which
+  # was invisible for years because every other consumer -- dovecot, postfix,
+  # the mail password files -- reads it as root via LoadCredential. kanidm does
+  # not: it reads its secrets as the `kanidm` user, and without the +x here it
+  # gets EACCES on a file whose own mode is perfectly fine. 0711 grants
+  # traversal without granting the ability to list the directory.
   #
   # `z` adjusts an existing path and is silently skipped otherwise, which is
   # what makes the mail token below harmless while `mailUsesLdap` is false.
   systemd.tmpfiles.settings."15-sso-secrets" =
     let
-      kanidmOnly = {
+      kanidmSecret = {
         z = {
           user = "kanidm";
           group = "kanidm";
@@ -219,17 +215,20 @@ in
       };
     in
     {
-      "/data/keys/kanidm-idm-admin-password" = kanidmOnly;
-      "/data/keys/kanidm-persons.json" = kanidmOnly;
-      "/data/keys/kanidm-oauth2-vaultwarden" = kanidmOnly;
-      # Shared with nextcloud-setup, hence the group and the extra bit.
-      "/data/keys/kanidm-oauth2-nextcloud".z = {
+      "/data/keys".z = {
         user = "root";
-        group = "oidc-secrets";
-        mode = "0440";
+        group = "root";
+        mode = "0711";
       };
-      # Loaded by systemd as a credential for dovecot, and read by
-      # postfix-setup's preStart, both as root.
+      "/data/keys/kanidm-idm-admin-password" = kanidmSecret;
+      "/data/keys/kanidm-persons.json" = kanidmSecret;
+      "/data/keys/kanidm-oauth2-vaultwarden" = kanidmSecret;
+      # kanidm pushes this as the oauth2 basic secret; nextcloud-setup gets it
+      # through LoadCredential, which systemd reads as root, so it needs no
+      # group of its own.
+      "/data/keys/kanidm-oauth2-nextcloud" = kanidmSecret;
+      # Loaded as a systemd credential for dovecot and read by postfix-setup's
+      # preStart, both as root.
       "/data/keys/kanidm-mailserver-token".z = {
         user = "root";
         group = "root";
@@ -639,6 +638,16 @@ in
     after = [ "kanidm.service" ];
     wants = [ "kanidm.service" ];
 
+    # systemd reads this as root before dropping to the `nextcloud` user, so
+    # neither the directory's traversal bits nor any shared group matters. The
+    # earlier approach -- a root:oidc-secrets 0440 file -- depended on both, and
+    # broke twice: once because /data/keys is not traversable by non-root, and
+    # once because a rolled-back deploy removed the group while leaving its GID
+    # stamped on the file.
+    serviceConfig.LoadCredential = [
+      "oidc-client-secret:/data/keys/kanidm-oauth2-nextcloud"
+    ];
+
     postStart = ''
       ${lib.getExe config.services.nextcloud.occ} config:app:set files_lock lock_timeout --value 1440
 
@@ -650,12 +659,16 @@ in
       # which tests/nextcloud-oidc.nix asserts against a real Kanidm and a real
       # Nextcloud -- including that an existing account is reused rather than
       # duplicated. See `nix build .#checks.x86_64-linux.nextcloud-oidc`.
-      ${lib.getExe config.services.nextcloud.occ} user_oidc:provider Kanidm \
-        --clientid="${oidcClientId}" \
-        --clientsecret-file="/data/keys/kanidm-oauth2-nextcloud" \
-        --discoveryuri="${nextcloudOidc.discoveryUriFor "https://${idmFQDN}" oidcClientId}" \
-        --endsessionendpointuri="https://${idmFQDN}/ui/logout" \
-        ${lib.escapeShellArgs nextcloudOidc.providerMappingArgs}
+      ${nextcloudOidc.registerProviderCommand {
+        occ = lib.getExe config.services.nextcloud.occ;
+        clientId = oidcClientId;
+        # The literal credentials path rather than $CREDENTIALS_DIRECTORY: the
+        # arguments are shell-escaped, so a variable would be passed through
+        # unexpanded. Same form simple-nixos-mailserver uses for dovecot.
+        clientSecretFile = "/run/credentials/nextcloud-setup.service/oidc-client-secret";
+        discoveryUri = nextcloudOidc.discoveryUriFor "https://${idmFQDN}" oidcClientId;
+        endSessionUri = "https://${idmFQDN}/ui/logout";
+      }}
 
       # Keep the plain login form reachable alongside SSO during the migration;
       # it is also the way back in if Kanidm is ever down.
