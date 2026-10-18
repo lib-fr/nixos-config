@@ -4,8 +4,8 @@
 # claims about what another system exposes, so tests/nextcloud-oidc.nix
 # exercises this very code instead of a copy of it. Both take a base URL rather
 # than a hostname so the test can point them at its own port.
-{ }:
-{
+{ lib }:
+rec {
   # Kanidm publishes one discovery document per oauth2 client, under the
   # client's name -- not a single document for the whole server. Getting this
   # path wrong is silent until someone tries to log in.
@@ -29,4 +29,33 @@
     "--mapping-display-name=name"
     "--mapping-email=email"
   ];
+
+  # The full `occ user_oidc:provider` invocation, shared so that
+  # tests/nextcloud-oidc.nix runs the production command rather than a
+  # paraphrase of it. Every argument goes through escapeShellArgs: passing the
+  # mapping flags unquoted once split `--scope=openid email profile` into three
+  # arguments.
+  registerProviderCommand =
+    {
+      occ,
+      providerName ? "Kanidm",
+      clientId,
+      clientSecretFile,
+      discoveryUri,
+      endSessionUri ? null,
+    }:
+    lib.escapeShellArgs (
+      [
+        occ
+        "user_oidc:provider"
+        providerName
+        "--clientid=${clientId}"
+        # Read by path, so the secret never reaches the Nix store or the
+        # process table.
+        "--clientsecret-file=${clientSecretFile}"
+        "--discoveryuri=${discoveryUri}"
+      ]
+      ++ lib.optional (endSessionUri != null) "--endsessionendpointuri=${endSessionUri}"
+      ++ providerMappingArgs
+    );
 }

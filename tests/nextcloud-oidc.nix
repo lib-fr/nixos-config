@@ -29,7 +29,7 @@ let
     cp ${certs."${domain}".key} $out/key.pem
   '';
 
-  oidc = import ../lib/nextcloud-oidc.nix { };
+  oidc = import ../lib/nextcloud-oidc.nix { inherit lib; };
   clientId = "nextcloud";
 
   # Only one snakeoil certificate exists, so both services answer on the same
@@ -113,6 +113,17 @@ in
         };
       };
 
+      # Written by the boot-time activation so it is in place before
+      # nextcloud-setup runs, standing in for the operator's scp.
+      system.activationScripts.testSecret = {
+        deps = [ "specialfs" ];
+        text = ''
+          install -d -m 0700 -o root -g root /run/test-secrets
+          printf '%s' '${clientSecret}' > /run/test-secrets/oauth2-nextcloud
+          chmod 0400 /run/test-secrets/oauth2-nextcloud
+        '';
+      };
+
       services.nextcloud = {
         enable = true;
         package = pkgs.nextcloud34;
@@ -131,6 +142,29 @@ in
         forceSSL = true;
         sslCertificate = "${certsPath}/cert.pem";
         sslCertificateKey = "${certsPath}/key.pem";
+      };
+
+      # Reproduces the shape that broke the real deploy: a root-only directory
+      # holding a secret the service user cannot reach by its own credentials.
+      # nextcloud-setup must still get at it, via LoadCredential.
+      systemd.tmpfiles.settings."10-test-secrets" = {
+        "/run/test-secrets".d = {
+          user = "root";
+          group = "root";
+          mode = "0700";
+        };
+      };
+      systemd.services.nextcloud-setup = {
+        serviceConfig.LoadCredential = [
+          "oidc-client-secret:/run/test-secrets/oauth2-nextcloud"
+        ];
+        postStart = ''
+          ${oidc.registerProviderCommand {
+            occ = lib.getExe config.services.nextcloud.occ;
+            inherit clientId discoveryUri;
+            clientSecretFile = "/run/credentials/nextcloud-setup.service/oidc-client-secret";
+          }}
+        '';
       };
 
       environment.systemPackages = [
@@ -185,14 +219,10 @@ in
         users = json.loads(server.succeed("nextcloud-occ user:list --output=json"))
         assert "${personName}" in users, f"setup failed, no such user: {users}"
 
-    with subtest("the provider registers with the production arguments"):
-        server.succeed(
-            "nextcloud-occ user_oidc:provider Kanidm"
-            " --clientid='${clientId}'"
-            " --clientsecret='${clientSecret}'"
-            " --discoveryuri='${discoveryUri}'"
-            " ${lib.escapeShellArgs oidc.providerMappingArgs}"
-        )
+    with subtest("nextcloud-setup registered the provider, reading a root-only secret"):
+        # No registration here: nextcloud-setup already ran it at boot, with the
+        # secret in a directory the nextcloud user cannot even enter. If
+        # LoadCredential regressed, the unit would have failed and this is empty.
         provider = json.loads(
             server.succeed("nextcloud-occ user_oidc:provider Kanidm --output=json")
         )
