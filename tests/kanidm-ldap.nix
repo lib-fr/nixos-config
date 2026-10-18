@@ -73,6 +73,13 @@ in
             ldapbindaddress = "[::]:636";
             tls_chain = "${certsPath}/cert.pem";
             tls_key = "${certsPath}/key.pem";
+            # Mirrors production. Kanidm rejects unknown config keys at
+            # startup, so if this one is renamed again the test fails here
+            # rather than during a deploy.
+            http_client_address_info."x-forward-for" = [
+              "127.0.0.1"
+              "::1"
+            ];
           };
         };
 
