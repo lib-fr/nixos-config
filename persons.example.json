@@ -1,6 +1,6 @@
 {
   "persons": {
-    "prenom": {
+    "prenom.nom": {
       "displayName": "Prénom Nom",
       "legalName": "Prénom Nom",
       "mailAddresses": [
@@ -8,34 +8,34 @@
         "prenom@libr.fr"
       ]
     },
-    "autre": {
+    "autre.personne": {
       "displayName": "Autre Personne",
       "mailAddresses": [
-        "autre@libr.fr"
+        "autre.personne@libr.fr"
       ]
     }
   },
   "groups": {
     "nextcloud_users": {
       "members": [
-        "prenom",
-        "autre"
+        "prenom.nom",
+        "autre.personne"
       ]
     },
     "nextcloud_admins": {
       "members": [
-        "prenom"
+        "prenom.nom"
       ]
     },
     "vaultwarden_users": {
       "members": [
-        "prenom"
+        "prenom.nom"
       ]
     },
     "mail_users": {
       "members": [
-        "prenom",
-        "autre"
+        "prenom.nom",
+        "autre.personne"
       ]
     }
   }
