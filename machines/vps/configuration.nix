@@ -258,8 +258,17 @@ in
         ldapbindaddress = "127.0.0.1:3636";
         tls_chain = "/var/lib/acme/${idmFQDN}/fullchain.pem";
         tls_key = "/var/lib/acme/${idmFQDN}/key.pem";
-        # Sits behind nginx, so take the client address from the proxy.
-        trust_x_forward_for = true;
+        # Sits behind nginx, so take the real client address from the proxy
+        # rather than logging 127.0.0.1 for every request (it also feeds
+        # rate-limiting and account lockout). Only loopback is trusted to
+        # supply the header, since that is the only thing that can reach the
+        # socket. `trust_x_forward_for` was the pre-1.11 spelling and is now
+        # rejected at startup -- tests/kanidm-ldap.nix sets this too, so a
+        # renamed key fails there instead of on the server.
+        http_client_address_info."x-forward-for" = [
+          "127.0.0.1"
+          "::1"
+        ];
         online_backup = {
           path = "/data/kanidm-backups";
           versions = 7;
