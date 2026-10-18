@@ -37,6 +37,33 @@ Le fichier fait autorité : `autoRemove` étant actif, une personne retirée du
 fichier est supprimée de Kanidm au redémarrage suivant. Un fichier absent fait
 échouer le service plutôt que de vider l'annuaire.
 
+### Renommer une personne : deux passes obligatoires
+
+`kanidm-provision` **crée avant de supprimer**, et l'attribut `mail` doit être
+unique dans tout l'annuaire. Renommer `marine` en `marine.mercier` en une seule
+passe échoue donc : la nouvelle personne réclame une adresse que l'ancienne
+détient encore, et kanidm refuse —
+
+```
+AttributeUniqueness([Mail, Mail])
+409 Conflict  /v1/person/marine.mercier/_attr/mail
+conflicting_with: marine@idm.libr.fr
+```
+
+ce qui fait échouer `kanidm.service` au démarrage (l'erreur survient dans
+`ExecStartPost`). Procéder en deux passes :
+
+1. téléverser le fichier avec les **nouveaux noms mais sans `mailAddresses`**,
+   puis `systemctl restart kanidm`. Les anciennes personnes sont supprimées, ce
+   qui libère les adresses ;
+2. téléverser le fichier complet, avec les adresses, et redémarrer à nouveau.
+
+Faire une sauvegarde avant (`cp -a kanidm-persons.json kanidm-persons.json.bak-$(date +%F)`).
+
+À faire **avant** tout déplacement de boîte aux lettres : renommer une personne
+la supprime et la recrée, donc son `entryuuid` change — or c'est lui qui donne
+le chemin `/data/vmail/ldap/<entryuuid>`.
+
 Après avoir ajouté quelqu'un, lui envoyer un lien de création d'identifiants :
 
 ```sh
