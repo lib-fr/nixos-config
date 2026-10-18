@@ -16,6 +16,14 @@ Le format est celui de [kanidm-provision][kp], dont
 Attention : l'appartenance aux groupes se déclare sous `groups.<nom>.members`,
 et *pas* dans chaque personne.
 
+**Uniquement des personnes.** L'identifiant est `prenom.nom` — le même pour
+Kanidm, pour le compte Nextcloud et pour l'adresse principale
+`prenom.nom@libr.fr`. Les boîtes de service ou de rôle (`nextcloud@`,
+`bitwarden@`, `labelleverte@`) ne sont *pas* ici : elles sont déclarées dans
+`serviceAccounts` (`machines/vps/configuration.nix`), restent en authentification
+par mot de passe, et n'ont donc ni SSO, ni réinitialisation d'identifiants, ni
+mot de passe POSIX.
+
 ```sh
 # éditer sur le serveur
 ssh root@vps

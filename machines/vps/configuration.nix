@@ -49,6 +49,66 @@ let
   # across one at a time rather than in a big bang.
   mailUsesLdap = false;
 
+  # Mail identities that belong to a service or a role rather than a person.
+  #
+  # They are deliberately NOT in the roster on the server: that file is personal
+  # data merged into Kanidm, and these have no person behind them. Keeping them
+  # here means they never get an SSO login, never need a credential reset or a
+  # POSIX password, and stay declarative for good -- which is also why they are
+  # unaffected by every phase of the LDAP migration.
+  #
+  # `nextcloud` and `bitwarden` are SMTP senders for those two services and are
+  # never read by anyone. `labelleverte` is a role mailbox that people do read,
+  # over IMAP, with the shared password below.
+  serviceAccounts = {
+    "labelleverte@libr.fr" = {
+      passwordFile = "/data/keys/labelleverte-at-libr-dot-fr";
+      aliases = [ "lbv@libr.fr" ];
+    };
+    "nextcloud@libr.fr" = {
+      passwordFile = "/data/keys/nextcloud-at-libr-dot-fr";
+      aliases = [ "ne-pas-repondre@libr.fr" ];
+    };
+    "bitwarden@libr.fr" = {
+      passwordFile = "/data/keys/bitwarden-at-libr-dot-fr";
+      # Shared with nextcloud@ above, as it was before this split.
+      aliases = [ "ne-pas-repondre@libr.fr" ];
+    };
+  };
+  serviceMailAccounts = lib.mapAttrs (_: account: {
+    hashedPasswordFile = account.passwordFile;
+    inherit (account) aliases;
+  }) serviceAccounts;
+
+  # People who still authenticate against a password file rather than Kanidm.
+  # Delete an entry here only once that person's maildir has been moved to
+  # /data/vmail/ldap/<entryuuid> -- until then this block is what actually
+  # serves their mail, and removing it early loses them access, not data.
+  humanAccounts = {
+    "mickours@libr.fr" = {
+      hashedPasswordFile = "/data/keys/mickours-at-libr-dot-fr";
+      aliases = [
+        "michael.mercier@libr.fr"
+        "michael@libr.fr"
+        "m@libr.fr"
+        "mm@libr.fr"
+        "info@libr.fr"
+        "postmaster@libr.fr"
+        "abuse@libr.fr"
+        "admin@libr.fr"
+        "contact@libr.fr"
+      ];
+    };
+    "marine.mercier@libr.fr" = {
+      hashedPasswordFile = "/data/keys/marine-mercier-at-libr-dot-fr";
+      aliases = [ "marine@libr.fr" ];
+    };
+    "simon.mercier@libr.fr" = {
+      hashedPasswordFile = "/data/keys/simon-mercier-at-libr-dot-fr";
+      aliases = [ "simon@libr.fr" ];
+    };
+  };
+
   facerecognition = pkgs.callPackage ../../pkgs/nextcloud-app-facerecognition { };
 in
 {
@@ -381,48 +441,30 @@ in
 
     x509.useACMEHost = "libr.fr";
 
-    # Use `mkpasswd -m sha-512` to create the salted password
-    accounts = {
-      "mickours@libr.fr" = {
-        hashedPasswordFile = "/data/keys/mickours-at-libr-dot-fr";
-        aliases = [
-          "michael.mercier@libr.fr"
-          "michael@libr.fr"
-          "m@libr.fr"
-          "mm@libr.fr"
-          "info@libr.fr"
-          "postmaster@libr.fr"
-          "abuse@libr.fr"
-          "admin@libr.fr"
-          "contact@libr.fr"
-        ];
-      };
-      "marine.mercier@libr.fr" = {
-        hashedPasswordFile = "/data/keys/marine-mercier-at-libr-dot-fr";
-        aliases = [ "marine@libr.fr" ];
-      };
-      "simon.mercier@libr.fr" = {
-        hashedPasswordFile = "/data/keys/simon-mercier-at-libr-dot-fr";
-        aliases = [ "simon@libr.fr" ];
-      };
-      "me@michaelmercier.fr" = {
-        hashedPasswordFile = "/data/keys/me-at-michaelmercier-dot-fr";
-        catchAll = [ "michaelmercier.fr" ];
-        aliases = [ "job@michaelmercier.fr" ];
-      };
-      "labelleverte@libr.fr" = {
-        hashedPasswordFile = "/data/keys/labelleverte-at-libr-dot-fr";
-        aliases = [ "lbv@libr.fr" ];
-      };
-      "nextcloud@libr.fr" = {
-        hashedPasswordFile = "/data/keys/nextcloud-at-libr-dot-fr";
-        aliases = [ "ne-pas-repondre@libr.fr" ];
-      };
-      "bitwarden@libr.fr" = {
-        hashedPasswordFile = "/data/keys/bitwarden-at-libr-dot-fr";
-        aliases = [ "ne-pas-repondre@libr.fr" ];
-      };
-    };
+    # Three kinds of mailbox live here, and they are migrating at different
+    # speeds. `mkpasswd -m sha-512` makes the salted passwords.
+    #
+    # Declarative accounts take priority over LDAP ones, so anything left in
+    # here keeps working untouched no matter how far the Kanidm migration has
+    # got. That is what makes the move safe one mailbox at a time.
+    accounts =
+      # 1. People. Each of these disappears from here once their mailbox has
+      #    moved to /data/vmail/ldap/<entryuuid> and Kanidm owns the identity.
+      #    Until then the roster on the server and this block describe the same
+      #    person twice, and this block wins.
+      humanAccounts
+      # 2. A person, but pinned here by a feature LDAP cannot express: catchAll
+      #    has no equivalent in the LDAP path, so this one stays declarative
+      #    even after the migration finishes.
+      // {
+        "me@michaelmercier.fr" = {
+          hashedPasswordFile = "/data/keys/me-at-michaelmercier-dot-fr";
+          catchAll = [ "michaelmercier.fr" ];
+          aliases = [ "job@michaelmercier.fr" ];
+        };
+      }
+      # 3. Service and role mailboxes -- see serviceAccounts in the let block.
+      // serviceMailAccounts;
 
     # Use imap on port 993 and smtp on 587
     enableImap = true;
