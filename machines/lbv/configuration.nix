@@ -17,6 +17,8 @@ in
     ../../modules/common.nix
   ];
 
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];   
+
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -127,6 +129,7 @@ in
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
+    xrdp
   ];
 
   # Enable the OpenSSH daemon.
