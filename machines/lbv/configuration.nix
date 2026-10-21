@@ -21,6 +21,13 @@ in
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Add RAID support
+  boot.swraid.enable = true;
+  boot.swraid.mdadmConf = ''
+    ARRAY /dev/md0 level=raid5 num-devices=3 metadata=1.2 spares=1 UUID=1faa89e9:1505cb14:0ed99102:70ffa15a
+       devices=/dev/sdb,/dev/sdc,/dev/sdd
+  '';
+
   # Enable networking
   networking.networkmanager.enable = true;
 
