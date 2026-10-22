@@ -8,7 +8,8 @@ let
     ../../keys/id_rsa_oursbook.pub
     ../../keys/id_rsa_vps_passless.pub
     ../../keys/id_sam.pub
-  ];
+    ../../keys/id_oursbook4.pub
+  ;
 in
 {
   imports = [
