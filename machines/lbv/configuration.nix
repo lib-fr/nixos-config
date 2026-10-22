@@ -23,9 +23,11 @@ in
 
   # Add RAID support
   boot.swraid.enable = true;
+  # TODO configure the mail alerts
   boot.swraid.mdadmConf = ''
     ARRAY /dev/md0 level=raid5 num-devices=3 metadata=1.2 spares=1 UUID=1faa89e9:1505cb14:0ed99102:70ffa15a
        devices=/dev/sdb,/dev/sdc,/dev/sdd
+    MAILADDR=nobody@nowhere
   '';
 
   # Enable networking
@@ -135,6 +137,9 @@ in
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
+    xfsprogs
+    mdadm
+    hdparm
   ];
 
   # Enable the OpenSSH daemon.
