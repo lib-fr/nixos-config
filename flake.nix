@@ -75,7 +75,7 @@
         path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.vps;
         # autoRollback = false;
       };
-      deploy.nodes.lbv.hostname = "lbv";
+      deploy.nodes.lbv.hostname = "lbv.libr.fr";
       deploy.nodes.lbv.profiles.system = {
         user = "root";
         sshUser = "root";

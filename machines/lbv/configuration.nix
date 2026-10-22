@@ -30,6 +30,7 @@ in
 
   # Enable networking
   networking.networkmanager.enable = true;
+  networking.hostName = "lbv";
 
   # Set your time zone.
   time.timeZone = "Europe/Paris";
