@@ -362,8 +362,9 @@ in
       # repo: it is merged in at runtime from a file on the server, using
       # kanidm-provision's own JSON schema. `persons.example.json` documents
       # the format. The module bind-mounts this path read-only into the unit,
-      # which runs as `kanidm`, so:
-      #   chown kanidm:kanidm /data/keys/kanidm-persons.json && chmod 400 it
+      # which runs as `kanidm`; its ownership comes from the tmpfiles rules
+      # above. Those run on deploy, so after editing the file by hand re-apply
+      # them before restarting: `systemd-tmpfiles --create --prefix=/data/keys`.
       #
       # Two things to know about the merge. It is a deep merge that appends
       # lists, so the empty `members` declared above are filled in from the
