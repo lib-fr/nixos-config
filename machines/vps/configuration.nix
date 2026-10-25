@@ -382,6 +382,14 @@ in
       # password. Each new person needs one reset link:
       #   kanidm person credential create-reset-token <name> --name idm_admin
 
+      # The basic secrets below must be alphanumeric (`openssl rand -hex 32`),
+      # never base64. RFC 6749 has clients URL-encode the secret in a Basic
+      # header, and Vaultwarden does; Kanidm does not decode it, because it
+      # assumes secrets it generated itself. So a `+`, `/` or `=` turns into
+      # `%2B`, `%2F`, `%3D` on the way in and every token exchange is a 401
+      # "Invalid OAuth2 client_id secret" -- with both copies byte-identical.
+      # Nextcloud escapes this only because user_oidc prefers
+      # client_secret_post, which Kanidm does decode.
       systems.oauth2 = {
         nextcloud = {
           displayName = "Nextcloud";
@@ -829,6 +837,13 @@ in
       # The vault stays encrypted under the master password regardless of how
       # the user authenticates, so existing accounts are adopted by matching the
       # e-mail address from Kanidm -- no re-encryption, no data loss.
+      #
+      # The match is against Kanidm's *primary* address only; aliases are not
+      # sent. An account registered under any other address gets a new, empty
+      # account instead, which shows up as a "set your master password" prompt.
+      # Before someone's first SSO login, change their Vaultwarden e-mail to
+      # their primary address (Settings > My account, with their master
+      # password -- the client re-wraps the vault key itself).
       SSO_SIGNUPS_MATCH_EMAIL = true;
       # Leave the master-password login path open: SSO_ONLY would lock everyone
       # out if Kanidm were unavailable. Worth revisiting once this has settled.
