@@ -28,8 +28,7 @@ mot de passe POSIX.
 # éditer sur le serveur
 ssh root@vps
 $EDITOR /data/keys/kanidm-persons.json
-chown kanidm:kanidm /data/keys/kanidm-persons.json
-chmod 400 /data/keys/kanidm-persons.json
+systemd-tmpfiles --create --prefix=/data/keys   # réapplique propriétaire et mode déclarés
 systemctl restart kanidm   # la reprovision a lieu au démarrage
 ```
 
