@@ -91,8 +91,13 @@ grdctl --system status
 
 Ces identifiants ne servent qu'à ouvrir la connexion RDP ; on arrive ensuite
 sur l'écran de connexion GDM, où l'on se connecte avec son compte Linux
-dans une nouvelle session, sans avoir à se déconnecter localement. Client : Remmina ou GNOME Connexions sous Linux, « Connexion
-Bureau à distance » sous Windows, adresse `lbv.libr.fr:3389`.
+dans une nouvelle session, sans avoir à se déconnecter localement.
+
+Client : Remmina ou GNOME Connexions sous Linux, « Connexion Bureau à
+distance » sous Windows, adresse locale de lbv : `192.168.1.22:3389`.
+Ne pas utiliser `lbv.libr.fr` : il pointe vers une adresse IPv6 publique, que
+le pare-feu refuse même depuis le réseau local. L'adresse locale est
+attribuée par DHCP ; si elle change, la retrouver avec `ip -4 -br addr` sur lbv.
 
 Le port 3389 n'est ouvert qu'au réseau local (plages privées IPv4, IPv6
 link-local et ULA). Depuis l'extérieur, passer par un tunnel SSH —
