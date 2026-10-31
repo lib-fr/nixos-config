@@ -47,6 +47,24 @@ in
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
 
+  # RDP remote login (GNOME Remote Desktop in system mode): each connection
+  # gets the GDM login screen in a new headless session, so nobody has to be
+  # logged in locally. The module ships the unit but, as with any
+  # systemd.packages unit, its [Install] WantedBy is ignored. TLS key and
+  # credentials are secrets set once with grdctl: see the README.
+  services.gnome.gnome-remote-desktop.enable = true;
+  systemd.services.gnome-remote-desktop.wantedBy = [ "graphical.target" ];
+  # RDP from the local network only: private IPv4 ranges, IPv6 link-local and
+  # ULA. The nixos-fw chain is flushed on every (re)start, so no stop command.
+  networking.firewall.extraCommands = ''
+    for net in 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16; do
+      iptables -A nixos-fw -p tcp --dport 3389 -s "$net" -j nixos-fw-accept
+    done
+    for net in fe80::/10 fc00::/7; do
+      ip6tables -A nixos-fw -p tcp --dport 3389 -s "$net" -j nixos-fw-accept
+    done
+  '';
+
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "fr";
@@ -129,6 +147,7 @@ in
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
+    openssl # to generate the RDP TLS certificate, see the README
   ];
 
   # Enable the OpenSSH daemon.

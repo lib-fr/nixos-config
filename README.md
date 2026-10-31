@@ -69,4 +69,34 @@ Après avoir ajouté quelqu'un, lui envoyer un lien de création d'identifiants 
 kanidm person credential create-reset-token <identifiant> --name idm_admin
 ```
 
+## Bureau à distance (RDP) sur lbv
+
+Le service et le port 3389 sont déclarés dans `machines/lbv/configuration.nix`,
+mais le certificat TLS et les identifiants RDP sont des secrets : ils se
+configurent une seule fois, à la main, et sont stockés dans
+`/var/lib/gnome-remote-desktop`.
+
+```sh
+ssh root@lbv.libr.fr
+cd /var/lib/gnome-remote-desktop
+sudo -u gnome-remote-desktop openssl req -new -newkey rsa:4096 -days 3650 -nodes -x509 \
+  -subj "/CN=lbv.libr.fr" -keyout rdp-tls.key -out rdp-tls.crt
+grdctl --system rdp set-tls-key  /var/lib/gnome-remote-desktop/rdp-tls.key
+grdctl --system rdp set-tls-cert /var/lib/gnome-remote-desktop/rdp-tls.crt
+grdctl --system rdp set-credentials   # demande l'utilisateur et le mot de passe RDP
+grdctl --system rdp enable
+systemctl restart gnome-remote-desktop
+grdctl --system status
+```
+
+Ces identifiants ne servent qu'à ouvrir la connexion RDP ; on arrive ensuite
+sur l'écran de connexion GDM, où l'on se connecte avec son compte Linux
+dans une nouvelle session, sans avoir à se déconnecter localement. Client : Remmina ou GNOME Connexions sous Linux, « Connexion
+Bureau à distance » sous Windows, adresse `lbv.libr.fr:3389`.
+
+Le port 3389 n'est ouvert qu'au réseau local (plages privées IPv4, IPv6
+link-local et ULA). Depuis l'extérieur, passer par un tunnel SSH —
+`ssh -L 3389:localhost:3389 root@lbv.libr.fr` — puis se connecter à
+`localhost:3389`.
+
 [kp]: https://github.com/oddlama/kanidm-provision#json-schema
