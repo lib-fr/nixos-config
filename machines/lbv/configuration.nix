@@ -24,6 +24,11 @@ in
 
   # Enable networking
   networking.networkmanager.enable = true;
+  # A server needs one stable IPv6 address for its AAAA record: no rotating
+  # privacy addresses. What stays is the stable-privacy SLAAC address, fixed
+  # for a given prefix, NetworkManager connection and
+  # /var/lib/NetworkManager/secret_key.
+  networking.tempAddresses = "disabled";
 
   # Set your time zone.
   time.timeZone = "Europe/Paris";
