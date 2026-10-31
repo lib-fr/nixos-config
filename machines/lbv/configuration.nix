@@ -29,6 +29,9 @@ in
   # for a given prefix, NetworkManager connection and
   # /var/lib/NetworkManager/secret_key.
   networking.tempAddresses = "disabled";
+  # NetworkManager reads the sysctl above only once, when it starts, and then
+  # re-applies its own value to the interface: say it explicitly.
+  networking.networkmanager.connectionConfig."ipv6.ip6-privacy" = 0;
 
   # Set your time zone.
   time.timeZone = "Europe/Paris";
