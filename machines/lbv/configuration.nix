@@ -145,7 +145,11 @@ in
       "wheel"
     ];
     packages = with pkgs; [
-      #  thunderbird
+      brave
+      git
+      vscode
+      lazygit
+      bitwarden-desktop
     ];
   };
 
