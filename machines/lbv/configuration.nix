@@ -112,12 +112,16 @@ in
   # StormCloud             #
   #************************#
 
-  # Apps for the household on the local network: http://lbv.libr.fr:3000.
+  # Apps for the household on the local network: http://192.168.1.22:3000
+  # (or http://lbv.libr.fr:3000 over IPv6).
   # PostgreSQL, Garage (S3 on port 3900) and Docker come with it. The first
   # admin's password is generated at the first start, see the README.
   services.stormcloud = {
     enable = true;
-    hostName = "lbv.libr.fr";
+    # Browsers reach app files (S3) at this address: lbv's LAN IPv4, which
+    # every device at home reaches (lbv.libr.fr's A record is the router's
+    # public address). Keep it fixed with a DHCP reservation on the router.
+    hostName = "192.168.1.22";
     # IPv6 too (and IPv4 through it): lbv.libr.fr resolves to IPv6 first.
     listenAddress = "[::]";
     # lbv.libr.fr resolves to lbv's global IPv6 address, which home devices
