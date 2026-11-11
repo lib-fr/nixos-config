@@ -118,15 +118,16 @@ in
   services.stormcloud = {
     enable = true;
     hostName = "lbv.libr.fr";
-    # lbv.libr.fr resolves to lbv's global IPv6 address, which LAN devices
-    # reach from the same prefix: open the ports to it too.
+    # lbv.libr.fr resolves to lbv's global IPv6 address, which home devices
+    # reach from the prefix the router delegates (a /56, one /64 per
+    # subnet): open the ports to it too.
     allowedNetworks = [
       "10.0.0.0/8"
       "172.16.0.0/12"
       "192.168.0.0/16"
       "fe80::/10"
       "fc00::/7"
-      "2a01:cb15:8524:c400::/64"
+      "2a01:cb15:8524:c400::/56"
     ];
   };
 
