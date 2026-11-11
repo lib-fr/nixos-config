@@ -306,7 +306,7 @@ in
     # `withSecretProvisioning` carries the out-of-tree patches that let the
     # oauth2 basic secrets and the idm_admin password below be provisioned from
     # files instead of being generated on every restart.
-    package = pkgs.kanidm_1_11.withSecretProvisioning;
+    package = pkgs.kanidmWithSecretProvisioning_1_12;
 
     server = {
       enable = true;

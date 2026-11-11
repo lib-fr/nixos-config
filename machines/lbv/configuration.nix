@@ -175,7 +175,8 @@ in
     packages = with pkgs; [
       brave
       git
-      vscode
+      # Broken 11/11/2026
+      # vscode
       lazygit
       bitwarden-desktop
     ];
