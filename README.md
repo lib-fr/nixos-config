@@ -105,3 +105,44 @@ link-local et ULA). Depuis l'extérieur, passer par un tunnel SSH —
 `localhost:3389`.
 
 [kp]: https://github.com/oddlama/kanidm-provision#json-schema
+
+## Stockage de Garage sur lbv (RAID1)
+
+Les données de Garage (`/srv/garage-data`) sont sur un miroir md RAID1 de deux
+disques de 1 To, formaté en XFS ; ses métadonnées restent sur le SSD
+(`/var/lib/garage/meta`). Tout est déclaré dans `machines/lbv/storage.nix`.
+
+```sh
+cat /proc/mdstat                 # [UU] = les deux disques sont bons
+mdadm --detail /dev/md/data
+smartctl -a /dev/sdX             # Current_Pending_Sector, Offline_Uncorrectable
+```
+
+### Alertes par courriel
+
+`mdmonitor` (disque en panne, miroir dégradé) et `smartd` (secteurs illisibles,
+température, auto-tests) envoient leurs alertes à `admin@libr.fr` (alias de `mickours@libr.fr`), depuis
+`lbv@libr.fr`, via msmtp et `mail.libr.fr`. Le mot de passe SMTP du compte
+`labelleverte@libr.fr` est un secret posé à la main :
+
+```sh
+ssh root@lbv.libr.fr
+install -d -m 700 /var/lib/secrets
+( umask 077; printf '%s' 'LE_MOT_DE_PASSE' > /var/lib/secrets/smtp-password )
+# test de toute la chaîne :
+printf 'Subject: test lbv\n\nça marche\n' | sendmail admin@libr.fr
+mdadm --monitor --scan --test --oneshot     # un courriel de test par grappe
+```
+
+### Remplacer un disque en panne
+
+```sh
+mdadm --detail /dev/md/data                 # repérer le disque « faulty »
+mdadm /dev/md/data --fail /dev/sdX --remove /dev/sdX
+# éteindre, changer le disque (noter le numéro de série : smartctl -i), rallumer
+mdadm /dev/md/data --add /dev/sdY           # disque entier, ≥ 931,5 Gio
+watch cat /proc/mdstat                      # reconstruction : ~2 à 3 h
+```
+
+Le miroir reste utilisable pendant la reconstruction, mais n'a plus de copie
+de secours : ne pas attendre pour remplacer un disque.

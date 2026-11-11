@@ -15,6 +15,7 @@ in
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
+    ./storage.nix
     ../../modules/common.nix
   ];
 
@@ -26,6 +27,11 @@ in
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+
+  # Shown in mails from mdadm and smartd: "lbv", DNS domain "libr.fr". Also
+  # adds "lbv.libr.fr lbv" to /etc/hosts so `hostname -f` resolves.
+  networking.hostName = "lbv";
+  networking.domain = "libr.fr";
 
   # Enable networking
   networking.networkmanager.enable = true;
