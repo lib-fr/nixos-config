@@ -109,11 +109,26 @@ in
   systemd.targets.hybrid-sleep.enable = false;
 
   #************************#
-  # Garage S3 for Libr.fr  #
+  # StormCloud             #
   #************************#
 
-  # services.garage.enable = true;
-  # services.garage.package = pkgs.garage_2;
+  # Apps for the household on the local network: http://lbv.libr.fr:3000.
+  # PostgreSQL, Garage (S3 on port 3900) and Docker come with it. The first
+  # admin's password is generated at the first start, see the README.
+  services.stormcloud = {
+    enable = true;
+    hostName = "lbv.libr.fr";
+    # lbv.libr.fr resolves to lbv's global IPv6 address, which LAN devices
+    # reach from the same prefix: open the ports to it too.
+    allowedNetworks = [
+      "10.0.0.0/8"
+      "172.16.0.0/12"
+      "192.168.0.0/16"
+      "fe80::/10"
+      "fc00::/7"
+      "2a01:cb15:8524:c400::/64"
+    ];
+  };
 
   # Inject common config
   environments.mickours.common = {

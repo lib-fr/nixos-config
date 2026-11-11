@@ -24,6 +24,10 @@
 
   inputs.bgremove.url = "github:RustyShare/bgremove/main";
 
+  # StormCloud on lbv. Not following nixpkgs: the flake builds it with its
+  # own pinned nixpkgs-unstable (Rust edition 2024, Spin 4).
+  inputs.stormcloud.url = "github:RustyShare/StormCloud";
+
   # Répartition des élèves en classes (dépôt local, pas encore poussé)
   inputs.repartition-classes = {
     url = "github:lib-fr/repartition_classes";
@@ -40,6 +44,7 @@
       leProjetDeVieInput,
       bgremove,
       repartition-classes,
+      stormcloud,
       ...
     }@inputs:
     let
@@ -64,6 +69,7 @@
           system = "x86_64-linux";
           modules = [
             ./machines/lbv/configuration.nix
+            stormcloud.nixosModules.default
           ];
         };
       };
