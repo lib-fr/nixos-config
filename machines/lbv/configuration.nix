@@ -118,6 +118,8 @@ in
   services.stormcloud = {
     enable = true;
     hostName = "lbv.libr.fr";
+    # IPv6 too (and IPv4 through it): lbv.libr.fr resolves to IPv6 first.
+    listenAddress = "[::]";
     # lbv.libr.fr resolves to lbv's global IPv6 address, which home devices
     # reach from the prefix the router delegates (a /56, one /64 per
     # subnet): open the ports to it too.
