@@ -24,9 +24,9 @@
 
   inputs.bgremove.url = "github:RustyShare/bgremove/main";
 
-  # StormCloud on lbv (a private repository, hence over SSH). Not following nixpkgs: the flake builds it with its
+  # Cabanon on lbv (a private repository, hence over SSH). Not following nixpkgs: the flake builds it with its
   # own pinned nixpkgs-unstable (Rust edition 2024, Spin 4).
-  inputs.stormcloud.url = "git+ssh://git@github.com/RustyShare/StormCloud?ref=main";
+  inputs.cabanon.url = "git+ssh://git@github.com/RustyShare/Cabanon?ref=main";
 
   # Répartition des élèves en classes (dépôt local, pas encore poussé)
   inputs.repartition-classes = {
@@ -44,7 +44,7 @@
       leProjetDeVieInput,
       bgremove,
       repartition-classes,
-      stormcloud,
+      cabanon,
       ...
     }@inputs:
     let
@@ -69,7 +69,7 @@
           system = "x86_64-linux";
           modules = [
             ./machines/lbv/configuration.nix
-            stormcloud.nixosModules.default
+            cabanon.nixosModules.default
           ];
         };
       };

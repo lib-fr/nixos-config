@@ -109,7 +109,7 @@ in
   systemd.targets.hybrid-sleep.enable = false;
 
   #************************#
-  # StormCloud             #
+  # Cabanon                #
   #************************#
 
   # Apps for the household on the local network, over HTTPS:
@@ -117,7 +117,7 @@ in
   # checks). PostgreSQL, Garage (S3 on port 3900) and Docker come with it.
   # The first admin's password is generated at the first start, see the
   # README.
-  services.stormcloud = {
+  services.cabanon = {
     enable = true;
     # The name the certificate is for. At home it resolves to lbv's IPv6
     # address; IPv4-only devices need the router to answer it with
