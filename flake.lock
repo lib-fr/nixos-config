@@ -229,6 +229,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-unstable": {
+      "locked": {
+        "lastModified": 1793977579,
+        "narHash": "sha256-WrSODdZFVIs/Hh2NzC0bY+ROByi0bATg8WfePX8dPj8=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "4fe25e12eb9f4c744966dd3de5a05246cf098601",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1778869304,
@@ -261,6 +277,22 @@
         "type": "github"
       }
     },
+    "nixpkgs_4": {
+      "locked": {
+        "lastModified": 1750259320,
+        "narHash": "sha256-H8J4H2XCIMEJ5g6fZ179QfQvsc2dUqhqfBjC8RAHNRY=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "9ba04bda9249d5d5e5238303c9755de5a49a79c5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-25.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "repartition-classes": {
       "inputs": {
         "nixpkgs": [
@@ -289,7 +321,8 @@
         "my_dotfiles": "my_dotfiles",
         "nixpkgs": "nixpkgs_3",
         "repartition-classes": "repartition-classes",
-        "simple-nixos-mailserver": "simple-nixos-mailserver"
+        "simple-nixos-mailserver": "simple-nixos-mailserver",
+        "stormcloud": "stormcloud"
       }
     },
     "simple-nixos-mailserver": {
@@ -314,6 +347,26 @@
         "ref": "nixos-26.05",
         "repo": "nixos-mailserver",
         "type": "gitlab"
+      }
+    },
+    "stormcloud": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_4",
+        "nixpkgs-unstable": "nixpkgs-unstable"
+      },
+      "locked": {
+        "lastModified": 1794420337,
+        "narHash": "sha256-imxkbm9VOzQ3pRVj62wFZFy5xRxCocJ+CkaAPGBs6Gw=",
+        "ref": "main",
+        "rev": "a374f28b04f1123f417dbb2d26b8b0f5ed114ab7",
+        "revCount": 245,
+        "type": "git",
+        "url": "ssh://git@github.com/RustyShare/StormCloud"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "ssh://git@github.com/RustyShare/StormCloud"
       }
     },
     "systems": {
