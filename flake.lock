@@ -355,11 +355,11 @@
         "nixpkgs-unstable": "nixpkgs-unstable"
       },
       "locked": {
-        "lastModified": 1794420337,
-        "narHash": "sha256-imxkbm9VOzQ3pRVj62wFZFy5xRxCocJ+CkaAPGBs6Gw=",
+        "lastModified": 1794424492,
+        "narHash": "sha256-b8y4P1sQId3oYWUeKJ/paP9TkWkZV7ZKhcXFbWGNhS4=",
         "ref": "main",
-        "rev": "a374f28b04f1123f417dbb2d26b8b0f5ed114ab7",
-        "revCount": 245,
+        "rev": "93452c18acc2063825c69c318946dfdbd35bfd53",
+        "revCount": 251,
         "type": "git",
         "url": "ssh://git@github.com/RustyShare/StormCloud"
       },
