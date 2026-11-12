@@ -28,6 +28,9 @@ in
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Let's Encrypt account contact.
+  security.acme.defaults.email = "admin@libr.fr";
+
   # Shown in mails from mdadm and smartd: "lbv", DNS domain "libr.fr". Also
   # adds "lbv.libr.fr lbv" to /etc/hosts so `hostname -f` resolves.
   networking.hostName = "lbv";
@@ -118,18 +121,24 @@ in
   # Cabanon                #
   #************************#
 
-  # Apps for the household on the local network, over HTTPS:
-  # https://cabanon.libr.fr (a Let's Encrypt certificate; port 80 answers its
-  # checks). PostgreSQL, Garage (S3 on port 3900) and Docker come with it.
-  # The first admin's password is generated at the first start, see the
-  # README.
+  # Apps for the household on the local network, over HTTPS on 443 only:
+  # the shell at https://cabanon.libr.fr, each app with a UI of its own at
+  # https://{app}.cabanon.libr.fr, app files (S3) at s3.cabanon.libr.fr.
+  # One Let's Encrypt wildcard certificate, checked through a TXT record at
+  # OVH (DNS-01), so lbv need not be reachable from the internet. PostgreSQL,
+  # Garage and Docker come with it. The first admin's password is generated
+  # at the first start, and the OVH API keys are a secret: see the README.
   services.cabanon = {
     enable = true;
-    # The name the certificate is for. Its A/AAAA records (and those of
-    # *.cabanon.libr.fr) are set by hand at OVH to lbv's addresses; at home
-    # IPv4-only devices need the router to answer it with 192.168.1.22.
+    # cabanon.libr.fr and *.cabanon.libr.fr: A/AAAA records set by hand at
+    # OVH to lbv's addresses; at home IPv4-only devices need the router to
+    # answer them with 192.168.1.22.
     hostName = "cabanon.libr.fr";
-    https.enable = true;
+    https = {
+      enable = true;
+      dnsProvider = "ovh";
+      credentialsFile = "/var/lib/secrets/ovh-dns.env";
+    };
     # Garage runs here, its data on the RAID1 mirror (storage.nix).
     garage.createLocally = true;
     # cabanon.libr.fr resolves to lbv's global IPv6 address, which home devices

@@ -106,6 +106,37 @@ link-local et ULA). Depuis l'extérieur, passer par un tunnel SSH —
 
 [kp]: https://github.com/oddlama/kanidm-provision#json-schema
 
+## Cabanon sur lbv : certificat wildcard (DNS-01 chez OVH)
+
+Cabanon sert `cabanon.libr.fr`, `*.cabanon.libr.fr` (une application par nom)
+et `s3.cabanon.libr.fr` avec un seul certificat wildcard Let's Encrypt, vérifié
+par un enregistrement TXT que lego pose chez OVH. Il faut des clés d'API OVH,
+limitées à la zone `libr.fr`, créées sur <https://eu.api.ovh.com/createToken/>
+avec une validité illimitée (sinon les renouvellements s'arrêtent sans bruit)
+et les seuls droits :
+
+```
+POST   /domain/zone/libr.fr/record
+POST   /domain/zone/libr.fr/refresh
+DELETE /domain/zone/libr.fr/record/*
+```
+
+puis posées à la main sur lbv :
+
+```sh
+ssh root@lbv.libr.fr
+install -d -m 700 /var/lib/secrets
+( umask 077; cat > /var/lib/secrets/ovh-dns.env <<'EOF'
+OVH_ENDPOINT=ovh-eu
+OVH_APPLICATION_KEY=...
+OVH_APPLICATION_SECRET=...
+OVH_CONSUMER_KEY=...
+EOF
+)
+systemctl restart acme-order-renew-cabanon.libr.fr.service
+journalctl -u acme-order-renew-cabanon.libr.fr.service -e
+```
+
 ## Stockage de Garage sur lbv (RAID1)
 
 Les données de Garage (`/srv/garage-data`) sont sur un miroir md RAID1 de deux
