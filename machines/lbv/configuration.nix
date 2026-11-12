@@ -119,18 +119,20 @@ in
   #************************#
 
   # Apps for the household on the local network, over HTTPS:
-  # https://lbv.libr.fr (a Let's Encrypt certificate; port 80 answers its
+  # https://cabanon.libr.fr (a Let's Encrypt certificate; port 80 answers its
   # checks). PostgreSQL, Garage (S3 on port 3900) and Docker come with it.
   # The first admin's password is generated at the first start, see the
   # README.
   services.cabanon = {
     enable = true;
-    # The name the certificate is for. At home it resolves to lbv's IPv6
-    # address; IPv4-only devices need the router to answer it with
-    # 192.168.1.22.
-    hostName = "lbv.libr.fr";
+    # The name the certificate is for. Its A/AAAA records (and those of
+    # *.cabanon.libr.fr) are set by hand at OVH to lbv's addresses; at home
+    # IPv4-only devices need the router to answer it with 192.168.1.22.
+    hostName = "cabanon.libr.fr";
     https.enable = true;
-    # lbv.libr.fr resolves to lbv's global IPv6 address, which home devices
+    # Garage runs here, its data on the RAID1 mirror (storage.nix).
+    garage.createLocally = true;
+    # cabanon.libr.fr resolves to lbv's global IPv6 address, which home devices
     # reach from the prefix the router delegates (a /56, one /64 per
     # subnet): open the ports to it too.
     allowedNetworks = [
