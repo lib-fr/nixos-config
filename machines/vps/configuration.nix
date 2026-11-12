@@ -164,9 +164,13 @@ in
   security.acme.certs = {
     "libr.fr" = {
       webroot = "/var/lib/acme/acme-challenge/";
-      email = "admin@libr.com";
+      email = "admin@libr.fr";
+      # Served by nginx too (the `libr.fr` vhost). Postfix and Dovecot load
+      # it as root, so they do not need the group.
+      group = "nginx";
       extraDomainNames = [
         "mail.libr.fr"
+        "www.libr.fr"
       ];
     };
   };
@@ -186,6 +190,19 @@ in
       "${nextcloudFQDN}" = {
         forceSSL = true;
         enableACME = true;
+      };
+
+      # Without a vhost of their own, these names fell through to the first
+      # one (bgremove) and got its certificate. This also serves the HTTP-01
+      # challenges of the `libr.fr` certificate, which Postfix and Dovecot use.
+      "libr.fr" = {
+        serverAliases = [
+          "www.libr.fr"
+          "mail.libr.fr"
+        ];
+        useACMEHost = "libr.fr";
+        forceSSL = true;
+        root = ./www;
       };
 
       "bgremove.libr.fr".forceSSL = true;

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bienvenue sur libr.fr</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f7f5;
+        --fg: #1d1d1b;
+        --muted: #66665f;
+        --card: #ffffff;
+        --line: #e2e2dc;
+        --accent: #2f6f4f;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #171716;
+          --fg: #ecece8;
+          --muted: #a3a39b;
+          --card: #21211f;
+          --line: #33332f;
+          --accent: #7cc49d;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main { max-width: 40rem; margin: 0 auto; padding: 3rem 1rem; }
+      h1 { margin: 0 0 .25rem; font-size: 2rem; }
+      p.lead { margin: 0 0 2rem; color: var(--muted); }
+      ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+      a.card {
+        display: block;
+        padding: 1rem 1.25rem;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: .75rem;
+        color: inherit;
+        text-decoration: none;
+      }
+      a.card:hover, a.card:focus-visible { border-color: var(--accent); }
+      a.card strong { color: var(--accent); }
+      a.card span { display: block; color: var(--muted); font-size: .9rem; }
+      h2 { margin: 2.5rem 0 .75rem; font-size: 1.1rem; }
+      table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+      td { padding: .35rem 0; border-bottom: 1px solid var(--line); }
+      td:first-child { color: var(--muted); width: 40%; }
+      code { font-family: ui-monospace, monospace; }
+      main > p a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Bienvenue sur libr.fr</h1>
+      <p class="lead">Hébergement de services libérés&nbsp;!</p>
+
+      <ul>
+        <li>
+          <a class="card" href="https://nextcloud.libr.fr">
+            <strong>Nextcloud</strong>
+            <span>Fichiers, photos, agenda et contacts</span>
+          </a>
+        </li>
+        <li>
+          <a class="card" href="https://bitwarden.libr.fr">
+            <strong>Bitwarden</strong>
+            <span>Gestionnaire de mots de passe</span>
+          </a>
+        </li>
+        <li>
+          <a class="card" href="https://idm.libr.fr">
+            <strong>Mon compte</strong>
+            <span>Identifiant unique, mot de passe et sécurité</span>
+          </a>
+        </li>
+      </ul>
+
+      <h2>Configurer sa messagerie</h2>
+      <table>
+        <tr><td>Réception (IMAP)</td><td><code>mail.libr.fr</code>, port 993, SSL/TLS</td></tr>
+        <tr><td>Envoi (SMTP)</td><td><code>mail.libr.fr</code>, port 465, SSL/TLS</td></tr>
+        <tr><td>Identifiant</td><td>l'adresse complète, <code>prenom.nom@libr.fr</code></td></tr>
+      </table>
+
+      <h2>Contact</h2>
+      <p><a href="mailto:info@libr.fr">info@libr.fr</a></p>
+    </main>
+  </body>
+</html>
