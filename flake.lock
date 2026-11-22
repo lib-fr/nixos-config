@@ -43,11 +43,11 @@
         "nixpkgs-unstable": "nixpkgs-unstable"
       },
       "locked": {
-        "lastModified": 1794490858,
-        "narHash": "sha256-8j1EbW+uRvoNrCNTI3BiOiNKK+hUBhbOQ9WrPZX3UyQ=",
+        "lastModified": 1795387108,
+        "narHash": "sha256-kOenAcHyXSRxCMKKKlVYYHIRZOK8jK96jsSQqJbJyfY=",
         "ref": "main",
-        "rev": "58194fde5d95f52e3d5015a860ccc8cb18a5b5a2",
-        "revCount": 291,
+        "rev": "54edab675ed7a6fa9ce5252fe9cc91ee705e83af",
+        "revCount": 301,
         "type": "git",
         "url": "ssh://git@github.com/RustyShare/Cabanon"
       },
