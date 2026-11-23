@@ -214,6 +214,10 @@ in
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
   services.openssh.settings.PermitRootLogin = "prohibit-password";
+  # Port 22 is forwarded from the internet, where bots try passwords all day
+  # (about 40,000 a week in November 2026): keys only, for every user.
+  services.openssh.settings.PasswordAuthentication = false;
+  services.openssh.settings.KbdInteractiveAuthentication = false;
 
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
   system.stateVersion = "26.05"; # Did you read the comment?
