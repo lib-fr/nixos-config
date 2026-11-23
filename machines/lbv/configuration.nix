@@ -141,6 +141,10 @@ in
     };
     # Garage runs here, its data on the RAID1 mirror (storage.nix).
     garage.createLocally = true;
+    # Every night at 03:30 into /var/lib/cabanon-backup (ADR 0038), on the
+    # SSD, so a copy outside the RAID1 mirror. Kept up to date in place,
+    # with no history: it still needs sending off lbv (restic).
+    backup.enable = true;
     # cabanon.libr.fr resolves to lbv's global IPv6 address, which home devices
     # reach from the prefix the router delegates (a /56, one /64 per
     # subnet): open the ports to it too.
