@@ -146,10 +146,11 @@ in
     # with no history: it still needs sending off lbv (restic).
     backup.enable = true;
     # AI models for apps (ADR 0027), on Ollama below: Photos tags pictures
-    # with a small vision model, on the CPU, a few at a time.
+    # with a small vision model and a text model, on the CPU, a few at a
+    # time.
     settings = {
       CABANON_AI_URL = "http://127.0.0.1:11434/v1";
-      CABANON_AI_MODELS = "vision-tagger=moondream";
+      CABANON_AI_MODELS = "vision-tagger=moondream,tag-writer=qwen2.5:1.5b";
     };
     # cabanon.libr.fr resolves to lbv's global IPv6 address, which home devices
     # reach from the prefix the router delegates (a /56, one /64 per
@@ -164,12 +165,16 @@ in
     ];
   };
 
-  # Ollama for Cabanon's AI models, on loopback only. moondream is a small
-  # vision model (1.8B) that runs on this CPU, tens of seconds a picture.
+  # Ollama for Cabanon's AI models, on loopback only. moondream, a small
+  # vision model (1.8B), describes a picture in about 30 s on this CPU;
+  # qwen2.5:1.5b writes tags from that description (Photos 0.11.1).
   services.ollama = {
     enable = true;
     host = "127.0.0.1";
-    loadModels = [ "moondream" ];
+    loadModels = [
+      "moondream"
+      "qwen2.5:1.5b"
+    ];
   };
 
   # Inject common config
