@@ -145,6 +145,12 @@ in
     # SSD, so a copy outside the RAID1 mirror. Kept up to date in place,
     # with no history: it still needs sending off lbv (restic).
     backup.enable = true;
+    # AI models for apps (ADR 0027), on Ollama below: Photos tags pictures
+    # with a small vision model, on the CPU, a few at a time.
+    settings = {
+      CABANON_AI_URL = "http://127.0.0.1:11434/v1";
+      CABANON_AI_MODELS = "vision-tagger=moondream";
+    };
     # cabanon.libr.fr resolves to lbv's global IPv6 address, which home devices
     # reach from the prefix the router delegates (a /56, one /64 per
     # subnet): open the ports to it too.
@@ -156,6 +162,14 @@ in
       "fc00::/7"
       "2a01:cb15:8524:c400::/56"
     ];
+  };
+
+  # Ollama for Cabanon's AI models, on loopback only. moondream is a small
+  # vision model (1.8B) that runs on this CPU, tens of seconds a picture.
+  services.ollama = {
+    enable = true;
+    host = "127.0.0.1";
+    loadModels = [ "moondream" ];
   };
 
   # Inject common config
